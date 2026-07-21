@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        PATH = "/opt/homebrew/bin:${env.PATH}"
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
+        IMAGE_NAME = "restaurant-company"
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -15,9 +17,22 @@ pipeline {
 
         stage('Verify Environment') {
             steps {
-                sh 'node -v'
-                sh 'npm -v'
-                sh 'docker --version'
+                sh '''
+                    echo "===== Environment ====="
+                    echo "PATH=$PATH"
+
+                    echo ""
+                    echo "===== Node ====="
+                    node -v
+
+                    echo ""
+                    echo "===== NPM ====="
+                    npm -v
+
+                    echo ""
+                    echo "===== Docker ====="
+                    /usr/local/bin/docker --version
+                '''
             }
         }
 
@@ -35,19 +50,31 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t restaurant-company:latest .'
+                sh '''
+                    /usr/local/bin/docker build \
+                    -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
             }
         }
 
     }
 
     post {
+
         success {
-            echo 'Pipeline completed successfully!'
+            echo "========================================"
+            echo "Pipeline completed successfully!"
+            echo "========================================"
         }
 
         failure {
-            echo 'Pipeline failed.'
+            echo "========================================"
+            echo "Pipeline failed."
+            echo "========================================"
+        }
+
+        always {
+            cleanWs()
         }
     }
 }
