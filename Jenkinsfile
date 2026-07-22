@@ -3,8 +3,13 @@ pipeline {
 
     environment {
         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
+
         IMAGE_NAME = "restaurant-company"
         IMAGE_TAG = "latest"
+
+        AWS_REGION = "us-east-1"
+        AWS_ACCOUNT_ID = "230026708124"
+        ECR_REPOSITORY = "restaurant-company"
     }
 
     stages {
@@ -31,11 +36,15 @@ pipeline {
 
                     echo ""
                     echo "===== Docker ====="
-                    /usr/local/bin/docker --version
+                    docker --version
 
                     echo ""
                     echo "===== AWS CLI ====="
                     aws --version
+
+                    echo ""
+                    echo "===== Trivy ====="
+                    trivy --version
                 '''
             }
         }
@@ -67,6 +76,7 @@ pipeline {
                         -Dsonar.sources=src \
                         -Dsonar.sourceEncoding=UTF-8
                         """
+
                     }
                 }
             }
@@ -83,8 +93,58 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    /usr/local/bin/docker build \
+                    docker build \
                     -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --format table \
+                    --output trivy-report.txt \
+                    --no-progress \
+                    ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Login to Amazon ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-ecr'
+                ]]) {
+
+                    sh '''
+                    aws ecr get-login-password --region ${AWS_REGION} | \
+                    docker login \
+                    --username AWS \
+                    --password-stdin \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+                    '''
+                }
+            }
+        }
+
+        stage('Tag Docker Image') {
+            steps {
+                sh '''
+                    docker tag \
+                    ${IMAGE_NAME}:${IMAGE_TAG} \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh '''
+                    docker push \
+                    ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
                 '''
             }
         }
@@ -96,8 +156,9 @@ pipeline {
         success {
             echo "========================================"
             echo "Pipeline completed successfully!"
-            echo "SonarQube analysis completed."
-            echo "Docker image built."
+            echo "SonarQube scan completed."
+            echo "Trivy scan completed."
+            echo "Docker image pushed to Amazon ECR."
             echo "========================================"
         }
 
@@ -108,6 +169,7 @@ pipeline {
         }
 
         always {
+            archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
             cleanWs()
         }
     }
