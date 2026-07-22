@@ -2,96 +2,89 @@ pipeline {
     agent any
 
     environment {
-        AWS_REGION = 'us-east-1'
-        AWS_ACCOUNT_ID = '230026708124'
-        ECR_REPOSITORY = 'restaurant-company'
-        IMAGE_NAME = 'restaurant-company'
-        IMAGE_TAG = 'latest'
-
-        PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
+        PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
+        IMAGE_NAME = "restaurant-company"
+        IMAGE_TAG = "latest"
     }
 
     stages {
 
-        stage('Checkout Source Code') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Verify Tools') {
+        stage('Verify Environment') {
             steps {
                 sh '''
-                echo "Node Version"
-                node -v
+                    echo "===== Environment ====="
+                    echo "PATH=$PATH"
 
-                echo "NPM Version"
-                npm -v
+                    echo ""
+                    echo "===== Node ====="
+                    node -v
 
-                echo "Docker Version"
-                docker --version
+                    echo ""
+                    echo "===== NPM ====="
+                    npm -v
 
-                echo "AWS CLI Version"
-                aws --version
+                    echo ""
+                    echo "===== Docker ====="
+                    /usr/local/bin/docker --version
+
+                    echo ""
+                    echo "===== AWS CLI ====="
+                    aws --version
                 '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                npm install
-                '''
+                sh 'npm install'
             }
         }
 
         stage('Build Application') {
             steps {
-                sh '''
-                npm run build
-                '''
+                sh 'npm run build'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('SonarQube') {
+
+                        sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=restaurant-company \
+                        -Dsonar.projectName=restaurant-company \
+                        -Dsonar.sources=src \
+                        -Dsonar.sourceEncoding=UTF-8
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 sh '''
-                docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                '''
-            }
-        }
-
-        stage('Login to Amazon ECR') {
-            steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-ecr'
-                ]]) {
-
-                    sh '''
-                    aws ecr get-login-password --region ${AWS_REGION} \
-                    | docker login \
-                      --username AWS \
-                      --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-                    '''
-                }
-            }
-        }
-
-        stage('Tag Docker Image') {
-            steps {
-                sh '''
-                docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
-                '''
-            }
-        }
-
-        stage('Push Image to Amazon ECR') {
-            steps {
-                sh '''
-                docker push \
-                ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:${IMAGE_TAG}
+                    /usr/local/bin/docker build \
+                    -t ${IMAGE_NAME}:${IMAGE_TAG} .
                 '''
             }
         }
@@ -101,15 +94,17 @@ pipeline {
     post {
 
         success {
-            echo "======================================"
-            echo "Image successfully pushed to Amazon ECR"
-            echo "======================================"
+            echo "========================================"
+            echo "Pipeline completed successfully!"
+            echo "SonarQube analysis completed."
+            echo "Docker image built."
+            echo "========================================"
         }
 
         failure {
-            echo "======================================"
-            echo "Pipeline Failed"
-            echo "======================================"
+            echo "========================================"
+            echo "Pipeline failed."
+            echo "========================================"
         }
 
         always {
