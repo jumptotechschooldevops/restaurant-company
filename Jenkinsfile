@@ -1,5 +1,7 @@
 pipeline {
-    agent
+    agent {
+        label "agent"
+    }
 
     environment {
         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
