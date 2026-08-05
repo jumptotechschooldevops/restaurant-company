@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
     <CartProvider>
-      <BrowserRouter basename="/restaurant-company">
+      <BrowserRouter >
         <ScrollToTop />
         <MainLayout>
           <Routes>
