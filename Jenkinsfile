@@ -116,7 +116,7 @@ pipeline {
             }
         }
 
-        stage('Login to Amazon ECR') {
+        stage('Login to AWS Credentials') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
