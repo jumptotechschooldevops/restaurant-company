@@ -1,5 +1,13 @@
 pipeline {
-    agent any
+    agent any }
+
+       tools  {
+           nodejs  'NodeJS'
+       }
+
+    tools {
+        nodejs 'NodeJS'
+    }   
 
     environment {
         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
@@ -8,7 +16,7 @@ pipeline {
         IMAGE_TAG = "latest"
 
         AWS_REGION = "us-east-1"
-        AWS_ACCOUNT_ID = "230026708124"
+        AWS_ACCOUNT_ID = "484908302072"
         ECR_REPOSITORY = "restaurant-company"
     }
 
@@ -65,7 +73,20 @@ pipeline {
             }
         }
 
-        stage('Login to AWS ECR') {
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                    trivy image \
+                    --severity HIGH,CRITICAL \
+                    --format table \
+                    --output trivy-report.txt \
+                    --no-progress \
+                    ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Login to AWS Credentials') {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
@@ -118,4 +139,5 @@ pipeline {
             echo "========================================"
         }
     }
+}
 }
