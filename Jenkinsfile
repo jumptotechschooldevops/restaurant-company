@@ -5,6 +5,10 @@ pipeline {
            nodejs  'NodeJS'
        }
 
+    tools {
+        nodejs 'NodeJS'
+    }   
+
     environment {
         PATH = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:${env.PATH}"
 
