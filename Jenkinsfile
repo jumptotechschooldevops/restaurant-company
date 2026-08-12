@@ -10,7 +10,7 @@ pipeline {
         IMAGE_TAG = "latest"
 
         AWS_REGION = "us-east-1"
-        AWS_ACCOUNT_ID = "230026708124"
+        AWS_ACCOUNT_ID = "484908302072"
         ECR_REPOSITORY = "restaurant-company"
     }
 
