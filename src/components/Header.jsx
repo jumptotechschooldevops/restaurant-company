@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useReservationModal } from '../context/ReservationModalContext';
 import { cn } from '../utils/cn';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { cartCount } = useCart();
+  const { openModal } = useReservationModal();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -19,6 +21,11 @@ export default function Header() {
   ];
 
   const isActive = (path) => location.pathname === path;
+
+  const handleOpenReservation = () => {
+    setIsMobileMenuOpen(false);
+    openModal();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-brand-cream/95 backdrop-blur-sm border-b border-brand-burgundy/10 shadow-sm">
@@ -50,13 +57,17 @@ export default function Header() {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link to="/reservations" className="bg-brand-burgundy text-brand-cream px-4 py-2 rounded-md hover:bg-brand-burgundy/90 transition-colors text-sm font-medium">
-              Reserve a Table
-            </Link>
+            <button
+              type="button"
+              onClick={openModal}
+              className="bg-brand-burgundy text-brand-cream px-4 py-2 rounded-md hover:bg-brand-burgundy/90 transition-colors text-sm font-medium"
+            >
+              Online Reservation
+            </button>
             <Link to="/menu" className="hidden lg:block bg-brand-burgundy text-brand-cream px-4 py-2 rounded-md font-semibold text-sm hover:bg-brand-burgundy/90 transition-colors shadow-sm mr-2">
-            Order Online
-          </Link>
-          <Link to="/cart" className="relative p-2 text-brand-charcoal hover:text-brand-burgundy transition-colors">
+              Order Online
+            </Link>
+            <Link to="/cart" className="relative p-2 text-brand-charcoal hover:text-brand-burgundy transition-colors">
               <ShoppingBag className="h-6 w-6" />
               {cartCount > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-brand-cream transform translate-x-1/4 -translate-y-1/4 bg-brand-gold rounded-full">
@@ -68,7 +79,7 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center space-x-4">
-             <Link to="/cart" className="relative p-2 text-brand-charcoal">
+            <Link to="/cart" className="relative p-2 text-brand-charcoal">
               <ShoppingBag className="h-6 w-6" />
               {cartCount > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-brand-cream bg-brand-gold rounded-full">
@@ -103,13 +114,13 @@ export default function Header() {
             </Link>
           ))}
           <div className="pt-4 px-3">
-            <Link
-              to="/reservations"
-              onClick={() => setIsMobileMenuOpen(false)}
+            <button
+              type="button"
+              onClick={handleOpenReservation}
               className="w-full flex justify-center py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-brand-cream bg-brand-burgundy hover:bg-brand-burgundy/90"
             >
-              Reserve a Table
-            </Link>
+              Online Reservation
+            </button>
           </div>
         </div>
       )}

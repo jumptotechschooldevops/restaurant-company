@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+*.md
+test.txt
+.env
+.env.*
+.vscode
+.idea
+.DS_Store
+*.log
+coverage
+k8s

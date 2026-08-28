@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { CartProvider } from './context/CartContext'
+import { ReservationModalProvider } from './context/ReservationModalContext'
 import { HelmetProvider } from 'react-helmet-async'
 import MainLayout from './layouts/MainLayout'
 import ScrollToTop from './components/ScrollToTop'
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <HelmetProvider>
     <CartProvider>
+      <ReservationModalProvider>
       <BrowserRouter >
         <ScrollToTop />
         <MainLayout>
@@ -42,6 +44,7 @@ createRoot(document.getElementById('root')).render(
           </Routes>
         </MainLayout>
       </BrowserRouter>
+      </ReservationModalProvider>
     </CartProvider>
     </HelmetProvider>
   </StrictMode>,

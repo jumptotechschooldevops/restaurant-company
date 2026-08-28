@@ -4,12 +4,14 @@ import SEO from '../components/SEO';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
+import { useReservationModal } from '../context/ReservationModalContext';
 import MenuCard from '../components/MenuCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Home() {
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { openModal } = useReservationModal();
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,12 +84,13 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Link
-              to="/reservations"
+            <button
+              type="button"
+              onClick={openModal}
               className="bg-brand-burgundy text-brand-cream px-8 py-4 rounded-md font-semibold text-lg hover:bg-brand-burgundy/90 transition-colors shadow-lg"
             >
-              Reserve a Table
-            </Link>
+              Online Reservation
+            </button>
             <Link
               to="/menu"
               className="bg-brand-white text-brand-charcoal px-8 py-4 rounded-md font-semibold text-lg hover:bg-brand-white/90 transition-colors shadow-lg"
